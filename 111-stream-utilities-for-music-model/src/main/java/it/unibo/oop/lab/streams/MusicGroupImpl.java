@@ -31,42 +31,67 @@ public final class MusicGroupImpl implements MusicGroup {
 
     @Override
     public Stream<String> orderedSongNames() {
-        return null;
+        return this.songs.stream()
+            .map(Song :: getSongName) //i -> i.getSongName()
+            .sorted();
     }
 
     @Override
     public Stream<String> albumNames() {
-        return null;
+        return albums.keySet().stream();
     }
 
     @Override
     public Stream<String> albumInYear(final int year) {
-        return null;
+        return albums.entrySet().stream()
+            .filter(i -> i.getValue() == year)
+            .map(Map.Entry :: getKey); //i -> i.getKey()
     }
 
     @Override
     public int countSongs(final String albumName) {
-        return -1;
+        return (int) songs.stream()
+            .filter(i -> i.getAlbumName().isPresent())
+            .filter(i -> i.getAlbumName().get().equals(albumName))
+            .count();
     }
 
     @Override
     public int countSongsInNoAlbum() {
-        return -1;
+        return (int) songs.stream()
+            .filter(i -> !i.getAlbumName().isPresent())
+            .count();
     }
 
     @Override
     public OptionalDouble averageDurationOfSongs(final String albumName) {
-        return null;
+        return this.songs.stream()
+            .filter(i -> i.getAlbumName().isPresent())
+            .filter(i -> i.getAlbumName()
+            .get().equals(albumName))
+            .mapToDouble(Song :: getDuration) //i -> i.getDuration()
+            .average();
     }
 
     @Override
     public Optional<String> longestSong() {
-        return null;
+        return this.songs.stream()
+            .sorted((x, y) -> Double.compare(y.getDuration(), x.getDuration()))
+            .map(Song :: getSongName) //i -> i.getSongName()
+            .findFirst();
     }
 
     @Override
     public Optional<String> longestAlbum() {
-        return null;
+        return albums.keySet().stream()
+            .map(i -> Map.entry(i, this.songs.stream()
+                .filter(t -> t.getAlbumName().isPresent())
+                .filter(t -> t.getAlbumName().get().equals(i))
+                .map(Song :: getDuration) //t -> t.getDuration()
+                .reduce((a, b) -> a + b)))
+            .sorted((x, y) -> Double.compare(y.getValue().get(), x.getValue().get()))
+            .map(Map.Entry :: getKey) //t -> t.getKey
+            .findFirst();
     }
 
     private static final class Song {
